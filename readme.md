@@ -23,3 +23,12 @@ So I write this wrapper to extract cookie and feed `fanbox-dl` before it starts.
 
 This script will try to find Firefox default profile and read cookies from its database,
 then feed the cookie in `fanbox-dl` desired format.
+
+## Suggestion
+
+I've still met HTTP 403 error using default args. It turns out that CloudFlare data contains CA information.
+Please add the correct CA from your browser before starting the program.
+
+```bash
+./pixiv-dl.py --user-agent "<user-agent>" --creator ...
+```
