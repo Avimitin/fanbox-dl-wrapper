@@ -75,7 +75,9 @@ def main():
         )
         exit(1)
 
-    subprocess.run(["fanbox-dl", "--cookie", ";".join(cookies)] + sys.argv)
+    commands = ["fanbox-dl", "--cookie", ";".join(cookies)] + sys.argv[1:]
+    print(f"running {" ".join(commands)}")
+    subprocess.run(commands)
 
 
 if __name__ == "__main__":
