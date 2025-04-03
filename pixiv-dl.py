@@ -69,6 +69,12 @@ def main():
     db_path = profile_parser.get_file("cookies.sqlite")
     db = FireFoxDB(db_path)
     cookies = db.find_fanbox_cookie()
+    if "--cookie" in sys.argv or "--sessid" in sys.argv:
+        print(
+            "This wrapper already handle cookie, please don't use --cookie or --sessid"
+        )
+        exit(1)
+
     subprocess.run(["fanbox-dl", "--cookie", ";".join(cookies)] + sys.argv)
 
 
