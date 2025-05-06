@@ -5,6 +5,82 @@ import os
 import configparser
 import subprocess
 import sys
+import time
+
+import http.server
+import threading
+
+USER_AGENT = ""
+
+
+class SingleRequestHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        # Capture User-Agent from headers
+        user_agent = self.headers.get("User-Agent", "Not specified")
+        print(f"Captured User-Agent: {user_agent}")
+        global USER_AGENT
+        USER_AGENT = user_agent
+
+        # Send response
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Request received. Server shutting down.")
+        print("Request received. Server shutting down.")
+
+        # Initiate server shutdown in new thread to avoid deadlock
+        threading.Thread(target=self.server.shutdown, daemon=True).start()
+
+
+class OneshotServer:
+    def run_server(self):
+        server = http.server.ThreadingHTTPServer(
+            ("localhost", 18000), SingleRequestHandler
+        )
+        server.serve_forever()
+
+    def __init__(self) -> None:
+        server_thread = threading.Thread(target=self.run_server, daemon=True)
+        server_thread.start()
+
+
+class OneshotFirefox(threading.Thread):
+    def __init__(self):
+        self.stdout = None
+        self.stderr = None
+        threading.Thread.__init__(self)
+
+    def kill(self):
+        self.p.terminate()
+
+    def run(self):
+        self.p = subprocess.Popen(
+            ["firefox", "--no-remote", "--headless", "http://localhost:18000"],
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        self.stdout, self.stderr = self.p.communicate()
+
+
+def get_latest_ua():
+    _ = OneshotServer()
+    firefox = OneshotFirefox()
+    firefox.start()
+
+    retry = 0
+    max_retry = 5
+    while USER_AGENT == "":
+        if retry < max_retry:
+            time.sleep(1)
+            retry += 1
+        else:
+            break
+
+    assert USER_AGENT != ""
+
+    firefox.kill()
+    return USER_AGENT
 
 
 class FireFoxDB:
@@ -69,13 +145,22 @@ def main():
     db_path = profile_parser.get_file("cookies.sqlite")
     db = FireFoxDB(db_path)
     cookies = db.find_fanbox_cookie()
-    if "--cookie" in sys.argv or "--sessid" in sys.argv:
+    ua = get_latest_ua()
+    blacklist = set(["--cookie", "--sess-id", "--user-agent"])
+    args = set(sys.argv)
+    if bool(blacklist & args):
         print(
-            "This wrapper already handle cookie, please don't use --cookie or --sessid"
+            f"This wrapper already handle cookie and UA, please don't add these args: {", ".join(blacklist)}"
         )
         exit(1)
 
-    commands = ["fanbox-dl", "--cookie", ";".join(cookies)] + sys.argv[1:]
+    commands = [
+        "fanbox-dl",
+        "--user-agent",
+        ua,
+        "--cookie",
+        ";".join(cookies),
+    ] + sys.argv[1:]
     print(f"running {" ".join(commands)}")
     subprocess.run(commands)
 
