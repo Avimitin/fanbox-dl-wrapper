@@ -21,6 +21,10 @@ So I write this wrapper to extract cookie and User-Agent from Firefox and feed `
 ./pixiv-dl.py <fanbox-dl-argument>
 ```
 
+## Config
+
+This script support reading creators from toml file. Read [`./fanbox.toml`](./fanbox.toml) for more.
+
 ## Strategy
 
 This script will try to find Firefox default profile and read cookies from its database,
