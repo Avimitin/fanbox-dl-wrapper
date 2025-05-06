@@ -7,7 +7,9 @@ for user who doesn't have Japanese IP. The `cf_clearance` section is also requir
 
 I've try some cookie exporter, but none of them have great support to re-format cookie output.
 And copy-pasting cookie from browser is not that elegant and convinient.
-So I write this wrapper to extract cookie and feed `fanbox-dl` before it starts.
+Even with cookies, I've still met HTTP 403 error. It turns out that CloudFlare data contains UA information.
+
+So I write this wrapper to extract cookie and User-Agent from Firefox and feed `fanbox-dl` before it starts.
 
 > Script only support Firefox now.
 
@@ -24,11 +26,10 @@ So I write this wrapper to extract cookie and feed `fanbox-dl` before it starts.
 This script will try to find Firefox default profile and read cookies from its database,
 then feed the cookie in `fanbox-dl` desired format.
 
-## Suggestion
+For UA, this script will start a simple http server and use Firefox to send a HTTP request,
+so I can get the actual User-Agent that a user will send to Fanbox.
 
-I've still met HTTP 403 error using default args. It turns out that CloudFlare data contains CA information.
-Please add the correct CA from your browser before starting the program.
+## Limitation
 
-```bash
-./pixiv-dl.py --user-agent "<user-agent>" --creator ...
-```
+- Firefox headless mode will not exit gracefully, sending termination signal
+will cause Firefox try restore latest session.
