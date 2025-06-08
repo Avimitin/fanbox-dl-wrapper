@@ -6,7 +6,6 @@ import configparser
 import subprocess
 import sys
 import time
-import tomllib
 
 import http.server
 import threading
@@ -142,7 +141,7 @@ class FirefoxDefaultProfileParser:
 
 
 def main():
-    blacklist = set(["--cookie", "--sess-id", "--user-agent", "--creator"])
+    blacklist = set(["--cookie", "--sess-id", "--user-agent"])
     args = set(sys.argv)
     if bool(blacklist & args):
         print(f"This wrapper already handle: {", ".join(blacklist)}")
@@ -154,19 +153,12 @@ def main():
     cookies = db.find_fanbox_cookie()
     ua = get_latest_ua()
 
-    options = None
-    with open("fanbox.toml", "rb") as f:
-        data = tomllib.load(f)
-        options = data["options"]
-
     commands = [
         "fanbox-dl",
         "--user-agent",
         ua,
         "--cookie",
         ";".join(cookies),
-        "--creator",
-        ",".join(options["creators"]),
     ] + sys.argv[1:]
     print(f"running {" ".join(commands)}")
     subprocess.run(commands)
